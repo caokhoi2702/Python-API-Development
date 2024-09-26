@@ -1,7 +1,19 @@
 from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+from dotenv import load_dotenv, dotenv_values
+import os
 
+load_dotenv()
+username = os.getenv("API_USERNAME")
+password = os.getenv("API_PASSWORD")
+
+uri = "mongodb+srv://"+username+":"+password+"@python-api-developer.rylyi.mongodb.net/?retryWrites=true&w=majority&appName=Python-API-Developer"
+
+# Create a new client and connect to the server
+client = MongoClient(uri)
 app = FastAPI()
 
 class Post(BaseModel):
