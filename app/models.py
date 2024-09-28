@@ -15,7 +15,7 @@ class Post(BaseModel):
     title: str = Field(...)
     content: str = Field(...)
 
-class UpdatePostModel(BaseModel):
+class UpdatePost(BaseModel):
     """
     A set of optional updates to be made to a post in the database.
     """
