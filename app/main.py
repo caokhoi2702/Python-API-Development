@@ -4,31 +4,11 @@ from pydantic import BaseModel
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from bson.objectid import ObjectId
-from bson.json_util import dumps
-from .config import settings
-from dotenv import load_dotenv
-import os
+from . import models
+from .database import client, database, post_collection
 
 # Initialize FastAPI
 app = FastAPI()
-
-# Get config from .env
-username = settings.API_USERNAME
-password = settings.API_PASSWORD
-uri = "mongodb+srv://"+username+":"+password+"@python-api-developer.rylyi.mongodb.net/?retryWrites=true&w=majority&appName=Python-API-Developer"
-
-# Create a new client and connect to the server
-client = MongoClient(uri)
-# Send a ping to confirm a successful connection
-try:
-    client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
-except Exception as e:
-    print(e)
-
-class Post(BaseModel):
-    title: str
-    content: str
 
 # my_posts = [
 #     {
@@ -61,7 +41,7 @@ def root():
 
 @app.get("/posts")
 def get_posts():
-    get_posts = client["main_db"]["Posts"].find({})
+    get_posts = post_collection.find({})
     posts = []
     for document in get_posts:
         document["_id"] = str(document["_id"])
@@ -82,20 +62,19 @@ def get_post(id: str):
     post["_id"] = str(post["_id"])
     return {"data": post}
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
-    try:
-        client["main_db"]["Posts"].insert_one(dict(post))
-    except Exception as error:
-        print(error)
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=str(error))
-    get_posts = client["main_db"]["Posts"].find({})
-    posts = []
-    for document in get_posts:
-        document["_id"] = str(document["_id"])
-        posts.append(document)
-    return {"Data": posts}
+@app.post("/posts", 
+          response_description="Add new post",
+          response_model=models.Post,
+          status_code=status.HTTP_201_CREATED,
+          response_model_by_alias=False)
+def create_post(post: models.Post = Body(...)):
+    new_post = post_collection.insert_one(
+        post.model_dump(by_alias=True, exclude=["id"])
+    )
+    created_post = post_collection.find_one(
+        {"_id": new_post.inserted_id}
+    )
+    return created_post
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_posts(id: str):
@@ -112,7 +91,7 @@ def delete_posts(id: str):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.put("/posts/{id}")
-def update_post(id: str, post: Post):
+def update_post(id: str, post: models.Post):
     update_operation = { '$set' : 
         dict(post)
     }
