@@ -1,18 +1,21 @@
 from fastapi import Response, status, HTTPException, APIRouter
 from fastapi.params import Body
 from bson.objectid import ObjectId
-from .. import models, database
+from .. import models, database, utils
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"]
+)
 
-@router.get("/users",
+@router.get("/",
         response_description="Get all users",
         response_model=models.UserCollection,
         response_model_by_alias=False)
 def get_posts():
     return models.UserCollection(users=database.user_collection.find().to_list(1000))
 
-@router.post("/users", 
+@router.post("/", 
         response_description="Add new user",
         response_model=models.UserOut,
         status_code=status.HTTP_201_CREATED,
@@ -30,7 +33,7 @@ def create_post(user: models.CreateUser = Body(...)):
     )
     return created_user
 
-@router.get("/users/{id}",
+@router.get("/{id}",
         response_description="Get one user",
         response_model=models.UserOut,
         response_model_by_alias=False)

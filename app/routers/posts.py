@@ -3,16 +3,19 @@ from fastapi.params import Body
 from bson.objectid import ObjectId
 from .. import models, database
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/posts",
+    tags=["Posts"]
+)
 
-@router.get("/posts",
+@router.get("/",
         response_description="Get all posts",
         response_model=models.PostCollection,
         response_model_by_alias=False)
 def get_posts():
     return models.PostCollection(posts=database.post_collection.find().to_list(1000))
 
-@router.get("/posts/{id}",
+@router.get("/{id}",
         response_description="Get one post",
         response_model=models.Post,
         response_model_by_alias=False)
@@ -30,7 +33,7 @@ def get_post(id: str):
     
     return got_post
 
-@router.post("/posts", 
+@router.post("/", 
         response_description="Add new post",
         response_model=models.Post,
         status_code=status.HTTP_201_CREATED,
@@ -44,7 +47,7 @@ def create_post(post: models.Post = Body(...)):
     )
     return created_post
 
-@router.delete("/posts/{id}", 
+@router.delete("/{id}", 
         response_description="Delete one post",
         status_code=status.HTTP_204_NO_CONTENT,
         response_model_by_alias=False)
@@ -62,7 +65,7 @@ def delete_posts(id: str):
     
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@router.put("/posts/{id}",
+@router.put("/{id}",
         response_description="Update one post",
         response_model=models.Post,
         response_model_by_alias=False)
