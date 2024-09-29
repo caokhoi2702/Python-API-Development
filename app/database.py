@@ -19,3 +19,4 @@ except Exception as e:
 
 database = client["main_db"]
 post_collection = database["Posts"]
+user_collection = database["Users"]
